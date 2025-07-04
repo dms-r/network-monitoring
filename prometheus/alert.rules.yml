@@ -1,0 +1,11 @@
+groups:
+  - name: blackbox-alerts
+    rules:
+      - alert: EndpointDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Endpoint {{ $labels.instance }} is down"
+          description: "The endpoint {{ $labels.instance }} did not respond to probe"

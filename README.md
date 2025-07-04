@@ -1,159 +1,131 @@
-# 📡 Network & System Monitoring with Docker (Grafana + Prometheus)
+# 🛰️ Docker-Based Network Monitoring Stack
 
-This project sets up a **Docker-based monitoring stack** using:
+This stack provides a complete network and infrastructure monitoring system using **Docker Compose**, featuring:
 
-- **Prometheus** – time series database for metrics
-- **Node Exporter** – exposes host system metrics
-- **cAdvisor** – collects Docker container metrics
-- **Grafana** – dashboards and visualizations
-
----
-
-## 🧱 Stack Components
-
-| Service        | Port   | Description                                  |
-|----------------|--------|----------------------------------------------|
-| Grafana        | `3000` | Web UI for dashboards                        |
-| Prometheus     | `9090` | Metrics database and query engine            |
-| Node Exporter  | `9100` | Collects host CPU, memory, disk, network     |
-| cAdvisor       | `8080` | Exposes metrics for running Docker containers|
+- **Prometheus** – metrics collection and alerting
+- **Grafana** – visualization and dashboards
+- **Node Exporter** – system-level metrics (CPU, memory, network)
+- **Blackbox Exporter** – external endpoint monitoring (HTTP, ping)
+- **cAdvisor** – Docker container metrics
 
 ---
 
-## 📁 File Structure
+## 🚀 Services Overview
+
+| Service            | Port  | Description                                  |
+|--------------------|-------|----------------------------------------------|
+| Prometheus         | 9090  | Metrics collection & queries                 |
+| Grafana            | 3000  | Metrics dashboards                           |
+| Node Exporter      | 9100  | Host system metrics                          |
+| Blackbox Exporter  | 9115  | HTTP/ping endpoint probe                     |
+| cAdvisor           | 8080  | Docker container stats                       |
+
+---
+
+## 🛠️ Setup Instructions
+
+### 1. Clone the Project
 
 ```bash
+git clone https://github.com/your-org/network-monitoring-stack.git
+cd network-monitoring-stack
+````
+
+### 2. Directory Structure
+
+```
 network-monitoring/
 ├── docker-compose.yml
 ├── prometheus/
-│   └── prometheus.yml
-├── grafana/
-│   └── (optional: dashboards/provisioning)
-└── README.md  <-- This file
+│   ├── prometheus.yml
+│   ├── alert.rules.yml
+│   └── blackbox.yml
+└── grafana/
 ```
 
----
-
-## 🚀 How to Run
-
-### 1. Clone the Repo
-
-```bash
-git clone https://github.com/yourname/network-monitoring.git
-cd network-monitoring
-```
-
-### 2. Start the Stack
+### 3. Launch the Stack
 
 ```bash
 docker-compose up -d
 ```
 
-### 3. Access Web Interfaces
+---
 
-| Tool      | URL                         | Default Login       |
-|-----------|-----------------------------|----------------------|
-| Grafana   | http://localhost:3000       | `admin` / `admin`    |
-| Prometheus| http://localhost:9090       | _No login required_  |
-| cAdvisor  | http://localhost:8080       | _No login required_  |
+## 🌐 Accessing Services
+
+* **Grafana**: [http://localhost:3000](http://localhost:3000)
+
+  * Username: `admin`, Password: `admin` (change this in production)
+
+* **Prometheus**: [http://localhost:9090](http://localhost:9090)
+
+* **cAdvisor**: [http://localhost:8080](http://localhost:8080)
 
 ---
 
-## 🔧 Configuration
+## 📊 Grafana Setup
 
-### prometheus/prometheus.yml
+### 1. Add Prometheus Data Source
 
-Defines scrape jobs for:
+* Navigate to **Configuration > Data Sources**
+* Choose **Prometheus**
+* URL: `http://prometheus:9090`
 
-- Prometheus itself
-- Node Exporter (host system)
-- cAdvisor (container-level metrics)
+### 2. Import Dashboards
 
-```yaml
-global:
-  scrape_interval: 15s
+| Dashboard                    | ID     |
+| ---------------------------- | ------ |
+| Node Exporter Full           | `1860` |
+| Docker Monitoring (cAdvisor) | `193`  |
+| Blackbox Exporter Overview   | `7587` |
 
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['prometheus:9090']
-
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
-
-  - job_name: 'cadvisor'
-    static_configs:
-      - targets: ['cadvisor:8080']
-```
+Go to **Dashboards > Import**, and paste the dashboard ID.
 
 ---
 
-## 📊 Grafana Dashboards
+## 🔍 What is Monitored
 
-After login to Grafana:
+### Node Exporter
 
-1. Add Prometheus data source:
-   - URL: `http://prometheus:9090`
-2. Import dashboards from Grafana.com:
-   - **Node Exporter Full** – ID: `1860`
-   - **Docker / cAdvisor Metrics** – ID: `193`
+* CPU, RAM, disk, load, network I/O
 
----
+### Blackbox Exporter
 
-## 📦 Docker Volumes & Permissions
+* External HTTP response status, ping response time
 
-Make sure the Node Exporter and cAdvisor services have access to your host’s `/proc`, `/sys`, and `/var/lib/docker` directories.
+### cAdvisor
 
-They’re mounted like this:
-
-```yaml
-volumes:
-  - /proc:/host/proc:ro
-  - /sys:/host/sys:ro
-  - /:/rootfs:ro
-  - /var/lib/docker/:/var/lib/docker:ro
-```
-
-This allows the monitoring stack to see real system and container metrics.
+* Docker container CPU, memory, network, filesystem stats
 
 ---
 
-## 🧼 Stop & Clean
+## 🚨 Alerting (Prometheus)
 
-To stop and remove all containers:
+Example alert rule:
 
-```bash
-docker-compose down
-```
+* **EndpointDown** – triggers if any probe from Blackbox fails for 1 minute
 
-To remove volumes:
+Defined in: `prometheus/alert.rules.yml`
 
-```bash
-docker-compose down -v
-```
+You can extend this by integrating **Alertmanager**.
 
 ---
 
-## ✅ Optional Enhancements
+## 📌 Notes
 
-- Alerting with Prometheus Alertmanager
-- Email or Slack notifications
-- Nginx reverse proxy with SSL
-- Auto dashboard provisioning in Grafana
-
----
-
-## 🛠️ Requirements
-
-- Docker
-- Docker Compose
-
-Tested on Linux and macOS.
+* Prometheus scrapes services every **15 seconds**
+* Add/remove endpoints to monitor by editing `prometheus.yml`
+* This stack runs entirely in Docker and uses a `bridge` network
 
 ---
 
-## 🧑‍💻 Author
-Made by Dimas
-Feel free to customize for your infrastructure.
+## ✅ Requirements
 
+* Docker
+* Docker Compose
+
+---
+
+## 📜 License
+
+MIT License
